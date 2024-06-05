@@ -1,7 +1,7 @@
 import sqlite3
 import os
 from sqlite3 import Error
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, url_for, redirect
 
 sqlite3.enable_callback_tracebacks(True)
 
@@ -31,7 +31,7 @@ def execute_select(conn, sql):
 def init_db(name):
     init_db_table_command = """
     CREATE TABLE IF NOT EXISTS item (
-        id integer PRIMARY KEY,
+        id integer PRIMARY KEY AUTOINCREMENT,
         name text,
         description text,
         hiddenField text
@@ -63,7 +63,7 @@ def init_db(name):
 
 
 @app.route('/')
-def welcome():
+def index():
     return render_template('splash.html')
 
 
@@ -79,6 +79,25 @@ def search():
     except Error as e:
         print(f"Error: {e}")    
 
+
+#  ', ' ', ' '); DROP TABLE IF EXISTS item; INSERT INTO item (id, name, description, hiddenField) VALUES (null, 'new
+@app.route('/add', methods=['POST'])
+def add():
+    name = request.form.get('name')
+    description = request.form.get('description')
+
+    if not name or not description:
+        return "Name and description are required!", 400
+
+    try:
+        conn = connect('data.db')
+        sql = f"""INSERT INTO item (id, name, description, hiddenField) VALUES (null, '{name}', '{description}', 'hidden message6');"""
+        conn.executescript(sql)
+        conn.commit()
+        return redirect(url_for('index'))
+    except Error as e:
+        print(f"Error: {e}")    
+        return "An error occurred while adding the entry", 500
 
 
 if __name__ == '__main__':
